@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penjelajah Kosmik: Kuis Luar Angkasa Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #070913;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .neon-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neon-card:hover:not(:disabled) {
+            border-color: #06b6d4;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.2);
+            transform: translateY(-3px) scale(1.01);
+        }
+        .neon-button-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+            transition: all 0.2s;
+        }
+        .neon-button-pink:hover {
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.7);
+            transform: scale(1.05);
+        }
+        .neon-button-cyan {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            transition: all 0.2s;
+        }
+        .neon-button-cyan:hover {
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.7);
+            transform: scale(1.05);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        /* Custom scrollbar for facts modal */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #06b6d4;
+            border-radius: 8px;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-certificate, #printable-certificate * {
+                visibility: visible;
+            }
+            #printable-certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-cyan-500 selection:text-white">
+
+    <canvas id="starfield" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- Sound Toggle Header Button -->
+    <header class="relative z-10 w-full max-w-5xl mx-auto px-4 pt-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="text-3xl animate-bounce">🚀</span>
+            <span class="font-orbitron font-bold text-lg md:text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">
+                KOSMIK QUIZ
+            </span>
+        </div>
+        <button id="sound-toggle" onclick="toggleAudio()" class="glass-panel px-4 py-2 rounded-full text-xs md:text-sm font-semibold flex items-center gap-2 hover:border-cyan-400 transition-colors">
+            <span id="sound-icon">🔊</span>
+            <span id="sound-text">Suara: ON</span>
+        </button>
+    </header>
+
+    <main class="relative z-10 flex-1 flex items-center justify-center p-4">
+        
+        <!-- ================= WELCOME SCREEN ================= -->
+        <section id="welcome-screen" class="w-full max-w-2xl text-center glass-panel p-8 md:p-12 rounded-3xl shadow-2xl border border-cyan-500/30">
+            <div class="inline-block animate-float mb-4 text-7xl md:text-8xl">
+                👨‍🚀
+            </div>
+            <h1 class="font-orbitron text-3xl md:text-5xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-400 to-yellow-300">
+                MISI PENJELAJAH KOSMIK
+            </h1>
+            <p class="text-slate-300 text-base md:text-lg mb-8 max-w-lg mx-auto leading-relaxed">
+                Halo Calon Astronaut! Siap menguji pengetahuanmu tentang Tata Surya, Bulan, Planet, dan Rahasia Luar Angkasa?
+            </p>
+            
+            <div class="mb-8">
+                <label for="player-name-input" class="block text-sm text-cyan-300 mb-2 font-semibold">Masukkan Nama Kaptenmu:</label>
+                <input type="text" id="player-name-input" placeholder="Contoh: Kapten Bintang" class="w-full max-w-xs px-5 py-3 text-center bg-slate-900/80 border-2 border-cyan-500/50 rounded-2xl text-white focus:outline-none focus:border-pink-500 transition-colors font-medium">
+            </div>
+
+            <button onclick="startQuiz()" class="neon-button-pink text-white font-orbitron font-bold text-lg md:text-xl px-10 py-4 rounded-2xl tracking-wide uppercase cursor-pointer">
+                🚀 Mulai Misi Sekarang!
+            </button>
+        </section>
+
+        <!-- ================= QUIZ SCREEN ================= -->
+        <section id="quiz-screen" class="hidden w-full max-w-3xl glass-panel p-6 md:p-8 rounded-3xl shadow-2xl border border-cyan-500/30">
+            
+            <!-- Rocket Progress Bar -->
+            <div class="mb-6 relative">
+                <div class="flex justify-between items-center text-xs md:text-sm font-semibold text-cyan-300 mb-2">
+                    <span id="question-count-text">Soal 1 / 10</span>
+                    <span id="score-text">Skor: 0</span>
+                </div>
+                <!-- Track -->
+                <div class="w-full bg-slate-800/80 h-4 rounded-full overflow-hidden p-0.5 border border-cyan-500/30 relative">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 rounded-full transition-all duration-500" style="width: 10%;"></div>
+                </div>
+                <!-- Rocket Icon moving along progress -->
+                <div id="rocket-indicator" class="absolute -top-3 transition-all duration-500 text-2xl filter drop-shadow-md" style="left: 0%;">
+                    🚀
+                </div>
+            </div>
+
+            <!-- Hint & Category Bar -->
+            <div class="flex justify-between items-center mb-4">
+                <span id="category-badge" class="bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 text-xs px-3 py-1.5 rounded-full font-medium">
+                    🌌 Tata Surya
+                </span>
+                <button id="hint-btn" onclick="useHint()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 px-3 py-1.5 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 transition-all">
+                    <span>📡 Sinyal Bumi</span>
+                    <span id="hint-count" class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full font-bold">3x</span>
+                </button>
+            </div>
+
+            <!-- Question Card -->
+            <div class="mb-6">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold text-white leading-snug">
+                    Memuat pertanyaan...
+                </h2>
+            </div>
+
+            <!-- Hint Display Box -->
+            <div id="hint-box" class="hidden mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-200 text-sm flex items-start gap-2 animate-fade-in">
+                <span>💡</span>
+                <p id="hint-text">Ini adalah pesan bantuan dari stasiun kontrol bumi...</p>
+            </div>
+
+            <!-- Option Buttons Grid -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- JS will inject options here -->
+            </div>
+
+            <!-- Explanation Box (Appears after answer) -->
+            <div id="explanation-box" class="hidden p-4 rounded-2xl mb-4 border transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="explanation-icon" class="text-xl">✨</span>
+                    <h3 id="explanation-title" class="font-bold text-base">Fakta Kosmik!</h3>
+                </div>
+                <p id="explanation-text" class="text-sm leading-relaxed opacity-90"></p>
+            </div>
+
+            <!-- Next Question Button -->
+            <div class="flex justify-end">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden neon-button-cyan text-white font-orbitron font-bold text-sm md:text-base px-6 py-3 rounded-xl flex items-center gap-2">
+                    Lanjut Soal <span class="text-lg">➡️</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= RESULT SCREEN ================= -->
+        <section id="result-screen" class="hidden w-full max-w-3xl glass-panel p-6 md:p-10 rounded-3xl shadow-2xl border border-pink-500/30 text-center">
+            <div class="text-6xl md:text-7xl mb-3 animate-bounce" id="result-badge-emoji">
+                🏆
+            </div>
+            <h2 class="font-orbitron text-2xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300">
+                LAPORAN AKHIR MISI
+            </h2>
+            <p class="text-slate-300 text-sm md:text-base mb-6">Kerja bagus, Kapten <span id="summary-player-name" class="text-cyan-300 font-bold">---</span>!</p>
+
+            <!-- Stats Box -->
+            <div class="grid grid-cols-3 gap-3 mb-6 bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50">
+                <div>
+                    <div class="text-xs text-slate-400 mb-1">Total Skor</div>
+                    <div id="final-score" class="font-orbitron text-2xl md:text-3xl font-bold text-yellow-400">0</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 mb-1">Akurasi</div>
+                    <div id="final-accuracy" class="font-orbitron text-2xl md:text-3xl font-bold text-cyan-400">0%</div>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 mb-1">Pangkat</div>
+                    <div id="final-rank-badge" class="font-orbitron text-xs md:text-sm font-bold text-pink-400 mt-2">Pemula</div>
+                </div>
+            </div>
+
+            <p id="rank-description" class="text-slate-300 text-sm mb-8 italic bg-pink-500/10 p-3 rounded-xl border border-pink-500/20">
+                "Pilihan tepat untuk penjelajah awal!"
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="showCertificate()" class="neon-button-pink text-white font-orbitron font-bold text-xs md:text-sm px-5 py-3 rounded-xl flex items-center gap-2">
+                    🎓 Lihat Sertifikat
+                </button>
+                <button onclick="showFunFacts()" class="bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-400/50 font-orbitron font-bold text-xs md:text-sm px-5 py-3 rounded-xl flex items-center gap-2 transition-all">
+                    📖 Pembahasan Fakta Kosmik
+                </button>
+                <button onclick="restartQuiz()" class="bg-slate-800 hover:bg-slate-700 text-white font-orbitron font-bold text-xs md:text-sm px-5 py-3 rounded-xl border border-slate-600 flex items-center gap-2 transition-all">
+                    🔄 Ulangi Misi
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= CERTIFICATE MODAL ================= -->
+    <div id="certificate-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-4 border-amber-400/80 p-6 md:p-10 rounded-3xl max-w-2xl w-full relative shadow-2xl text-center text-slate-100" id="printable-certificate">
+            
+            <button onclick="closeModal('certificate-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl font-bold">✕</button>
+
+            <div class="border-2 border-dashed border-amber-400/40 p-6 rounded-2xl relative">
+                <!-- Certificate Header -->
+                <div class="text-4xl mb-2">🏅</div>
+                <h3 class="font-orbitron text-xs md:text-sm tracking-widest text-amber-400 uppercase font-bold mb-1">
+                    Akademi Antariksa Internasional
+                </h3>
+                <h2 class="font-orbitron text-2xl md:text-4xl font-extrabold text-white mb-4">
+                    SERTIFIKAT KELULUSAN MISI
+                </h2>
+                
+                <p class="text-slate-300 text-xs md:text-sm mb-2">Sertifikat resmi ini dianugerahkan kepada:</p>
+                <div id="cert-name" class="font-orbitron text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-400 to-yellow-300 mb-3 border-b-2 border-cyan-500/30 inline-block px-6 py-1">
+                    Kapten Bintang
+                </div>
+                
+                <p class="text-slate-300 text-xs md:text-sm max-w-md mx-auto mb-6">
+                    Telah sukses menyelesaikan uji pengetahuan antariksa dan diangkat menjadi:
+                </p>
+
+                <div id="cert-rank" class="bg-gradient-to-r from-pink-500/20 to-cyan-500/20 border border-pink-500/50 text-yellow-300 font-orbitron font-bold text-lg md:text-xl py-2 px-6 rounded-full inline-block mb-6">
+                    🚀 Ahli Kosmik Murni
+                </div>
+
+                <div class="flex justify-between items-end text-left text-xs text-slate-400 border-t border-slate-800 pt-4 mt-2">
+                    <div>
+                        <p class="font-semibold text-slate-300">Tanggal Misi:</p>
+                        <p id="cert-date">12 Oktober 2026</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-slate-300">Akurasi Ujian:</p>
+                        <p id="cert-accuracy" class="text-cyan-400 font-bold">100%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer Buttons -->
+            <div class="mt-6 flex justify-center gap-3 print:hidden">
+                <button onclick="window.print()" class="neon-button-cyan text-white text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl">
+                    🖨️ Cetak / Simpan PDF
+                </button>
+                <button onclick="closeModal('certificate-modal')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FUN FACTS MODAL ================= -->
+    <div id="facts-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-cyan-500/40 p-6 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col relative shadow-2xl">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <h3 class="font-orbitron font-bold text-lg text-cyan-300 flex items-center gap-2">
+                    <span>📖</span> Pembahasan & Fakta Kosmik
+                </h3>
+                <button onclick="closeModal('facts-modal')" class="text-slate-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+
+            <div id="facts-list" class="overflow-y-auto space-y-4 pr-2 flex-1">
+                <!-- JS will inject facts review here -->
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 text-right">
+                <button onclick="closeModal('facts-modal')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs md:text-sm font-bold px-5 py-2.5 rounded-xl">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 text-center py-3 text-xs text-slate-500">
+        Misi Penjelajah Luar Angkasa &copy; 2026 - Edukasi Kosmik Interaktif
+    </footer>
+
+    <script>
+        /* ----------------------------------------------------
+         * 1. AUDIO SYNTHESIZER (Web Audio API - No external files)
+         * ---------------------------------------------------- */
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').innerText = soundEnabled ? '🔊' : '🔇';
+            document.getElementById('sound-text').innerText = soundEnabled ? 'Suara: ON' : 'Suara: OFF';
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                // Happy arpeggio
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'wrong') {
+                // Low buzz
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'laser') {
+                // Pew pew sound
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'fanfare') {
+                // Victory sound
+                const notes = [400, 500, 600, 800];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                    gain.gain.setValueAtTime(0.1, now + idx * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.25);
+
+                    osc.start(now + idx * 0.12);
+                    osc.stop(now + idx * 0.12 + 0.25);
+                });
+            }
+        }
+
+        /* ----------------------------------------------------
+         * 2. QUIZ DATA (12 Interactive Space Questions)
+         * ---------------------------------------------------- */
+        const quizData = [
+            {
+                category: "☀️ Matahari & Pusat Tata Surya",
+                question: "Apa pusat dari Sistem Tata Surya kita yang memancarkan cahaya dan panas?",
+                options: ["Bumi", "Matahari", "Bulan", "Jupiter"],
+                correct: 1,
+                hint: "Pusat ini adalah sebuah bintang raksasa yang sangat panas!",
+                explanation: "Matahari adalah bintang pusat Tata Surya kita! Semua planet mengelilingi Matahari karena gaya gravitasinya yang sangat besar."
+            },
+            {
+                category: "🪐 Planet",
+                question: "Planet manakah yang terkenal memiliki cincin indah yang sangat lebar?",
+                options: ["Mars", "Saturnus", "Venus", "Merkurius"],
+                correct: 1,
+                hint: "Planet ini adalah planet terbesar kedua di Tata Surya.",
+                explanation: "Saturnus memiliki sistem cincin paling megah yang terbuat dari miliaran bongkahan es dan debu batu."
+            },
+            {
+                category: "🔴 Planet Mars",
+                question: "Mengapa Planet Mars sering dinamakan sebagai 'Planet Merah'?",
+                options: ["Karena ditutupi lahar panas", "Karena permukaannya banyak mengandung besi berkarat", "Karena dekat sekali dengan Matahari", "Karena terbuat dari batu bata"],
+                correct: 1,
+                hint: "Warna merahnya berasal dari kandungan senyawa besi (debu karat).",
+                explanation: "Mars terlihat merah karena tanah dan debunya kaya akan besi oksida (senyawa yang sama dengan karat besi di Bumi)."
+            },
+            {
+                category: "🌙 Bulan",
+                question: "Bulan tidak bisa memancarkan cahayanya sendiri. Dari manakah asal cahaya Bulan saat malam hari?",
+                options: ["Pantulan cahaya Matahari", "Lampu raksasa di Bulan", "Gesekan angin antariksa", "Sinar dari planet Mars"],
+                correct: 0,
+                hint: "Cahaya ini seperti cermin yang memantulkan sinar bintang utama kita.",
+                explanation: "Bulan bersinar di malam hari karena memantulkan sinar dari Matahari seperti cermin raksasa!"
+            },
+            {
+                category: "👨‍🚀 Astronaut",
+                question: "Mengapa para astronaut melayang-layang saat berada di Stasiun Luar Angkasa (ISS)?",
+                options: ["Karena mereka menggunakan baju ajaib", "Karena tidak ada gaya gravitasi Bumi sama sekali", "Karena sedang berada dalam kondisi jatuh bebas (mikrogravitasi)", "Karena ada kipas angin raksasa"],
+                correct: 2,
+                hint: "Stasiun luar angkasa bergerak sangat cepat mengelilingi Bumi sehingga astronaut terus 'terjatuh'.",
+                explanation: "Astronaut melayang karena mereka berada dalam kondisi 'jatuh bebas' terus-menerus mengelilingi Bumi (mikrogravitasi)."
+            },
+            {
+                category: "🌍 Planet Bumi",
+                question: "Planet apa satu-satunya yang diketahui memiliki kehidupan dan cairan air di permukaannya?",
+                options: ["Venus", "Bumi", "Neptunus", "Uranus"],
+                correct: 1,
+                hint: "Ini adalah rumah tempat tinggal kita semua!",
+                explanation: "Bumi adalah satu-satunya planet yang diketahui memiliki air dalam bentuk cair dan atmosfer ideal untuk kehidupan."
+            },
+            {
+                category: "⭐ Bintang & Fenomena",
+                question: "Apakah yang dimaksud dengan 'Bintang Jatuh' yang sering kita lihat di langit malam?",
+                options: ["Bintang yang copot dari langit", "Meteoroid yang terbakar di atmosfer Bumi", "Satelit yang rusak", "Kembang api luar angkasa"],
+                correct: 1,
+                hint: "Ini adalah batuan kecil dari luar angkasa yang terbakar saat masuk ke Bumi.",
+                explanation: "'Bintang jatuh' sebenarnya adalah meteor—batuan antariksa yang terbakar karena gesekan dengan atmosfer Bumi!"
+            },
+            {
+                category: "💨 Planet Tercepat & Terpanas",
+                question: "Planet manakah yang posisinya paling dekat dengan Matahari?",
+                options: ["Merkurius", "Venus", "Mars", "Jupiter"],
+                correct: 0,
+                hint: "Planet ini ukurannya paling kecil di antara planet utama.",
+                explanation: "Merkurius adalah planet terdekat dari Matahari, mengelilingi Matahari hanya dalam waktu 88 hari Bumi!"
+            },
+            {
+                category: "🔵 Planet Raksasa",
+                question: "Planet manakah yang paling besar di seluruh Tata Surya kita?",
+                options: ["Saturnus", "Jupiter", "Uranus", "Bumi"],
+                correct: 1,
+                hint: "Planet gas raksasa ini memiliki bintik merah raksasa di permukaannya.",
+                explanation: "Jupiter adalah planet terbesar! Ukurannya begitu besar hingga bisa menampung lebih dari 1.000 planet Bumi di dalamnya."
+            },
+            {
+                category: "🌌 Fenomena Luar Angkasa",
+                question: "Cahaya menari-nari yang indah di daerah kutub Bumi (Kutub Utara/Selatan) disebut...",
+                options: ["Pelangi Malam", "Aurora", "Nebula", "Galaksi"],
+                correct: 1,
+                hint: "Nama fenomena ini mirip nama putri dalam dongeng (Aurora).",
+                explanation: "Aurora terjadi ketika partikel bermuatan dari Matahari bertabrakan dengan gas di atmosfer Bumi di sekitar daerah kutub!"
+            }
+        ];
+
+        /* ----------------------------------------------------
+         * 3. GAME STATE & LOGIC
+         * ---------------------------------------------------- */
+        let currentQuestion = 0;
+        let score = 0;
+        let hintsLeft = 3;
+        let playerName = "Kapten Bintang";
+        let userAnswers = [];
+
+        function startQuiz() {
+            initAudio();
+            playSound('laser');
+
+            const nameInput = document.getElementById('player-name-input').value.trim();
+            if (nameInput) {
+                playerName = nameInput;
+            }
+
+            currentQuestion = 0;
+            score = 0;
+            hintsLeft = 3;
+            userAnswers = [];
+
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+
+            updateHintUI();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = quizData[currentQuestion];
+
+            // Reset UI
+            document.getElementById('question-count-text').innerText = `Soal ${currentQuestion + 1} / ${quizData.length}`;
+            document.getElementById('score-text').innerText = `Skor: ${score}`;
+            document.getElementById('category-badge').innerText = q.category;
+            document.getElementById('question-text').innerText = q.question;
+
+            // Update Progress bar & Rocket position
+            const progressPercent = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+            document.getElementById('rocket-indicator').style.left = `calc(${progressPercent}% - 20px)`;
+
+            // Hide hint box and explanation
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('explanation-box').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+
+            // Render Options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'neon-card p-4 rounded-2xl text-left font-medium text-slate-100 flex items-center gap-3 w-full border text-sm md:text-base cursor-pointer';
+                btn.innerHTML = `
+                    <span class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center shrink-0 border border-cyan-500/30">
+                        ${String.fromCharCode(65 + idx)}
+                    </span>
+                    <span>${opt}</span>
+                `;
+                btn.onclick = () => selectAnswer(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            hintsLeft--;
+            updateHintUI();
+            playSound('laser');
+
+            const q = quizData[currentQuestion];
+            document.getElementById('hint-text').innerText = q.hint;
+            document.getElementById('hint-box').classList.remove('hidden');
+        }
+
+        function updateHintUI() {
+            document.getElementById('hint-count').innerText = `${hintsLeft}x`;
+            const hintBtn = document.getElementById('hint-btn');
+            if (hintsLeft <= 0) {
+                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                hintBtn.onclick = null;
+            }
+        }
+
+        function selectAnswer(selectedIndex) {
+            const q = quizData[currentQuestion];
+            const optionsContainer = document.getElementById('options-container');
+            const buttons = optionsContainer.getElementsByTagName('button');
+
+            // Disable all buttons after choice
+            for (let btn of buttons) {
+                btn.disabled = true;
+                btn.classList.add('cursor-not-allowed');
+            }
+
+            const isCorrect = selectedIndex === q.correct;
+            userAnswers.push({
+                question: q.question,
+                selected: q.options[selectedIndex],
+                correctAnswer: q.options[q.correct],
+                isCorrect: isCorrect,
+                explanation: q.explanation
+            });
+
+            if (isCorrect) {
+                score += 10;
+                playSound('correct');
+                buttons[selectedIndex].classList.remove('border-cyan-500/30');
+                buttons[selectedIndex].classList.add('bg-emerald-500/30', 'border-emerald-400', 'shadow-emerald-500/20');
+                
+                // Trigger stardust confetti for correct answer
+                confetti({
+                    particleCount: 30,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            } else {
+                playSound('wrong');
+                buttons[selectedIndex].classList.remove('border-cyan-500/30');
+                buttons[selectedIndex].classList.add('bg-rose-500/30', 'border-rose-400');
+                
+                // Highlight correct one
+                buttons[q.correct].classList.add('bg-emerald-500/20', 'border-emerald-400');
+            }
+
+            // Show explanation
+            const expBox = document.getElementById('explanation-box');
+            const expTitle = document.getElementById('explanation-title');
+            const expText = document.getElementById('explanation-text');
+
+            if (isCorrect) {
+                expBox.className = 'p-4 rounded-2xl mb-4 border bg-emerald-500/10 border-emerald-500/30 text-emerald-200 block';
+                expTitle.innerText = 'Jawaban Tepat! ✨';
+            } else {
+                expBox.className = 'p-4 rounded-2xl mb-4 border bg-rose-500/10 border-rose-500/30 text-rose-200 block';
+                expTitle.innerText = 'Hampir Benar! 🚀';
+            }
+            expText.innerText = q.explanation;
+
+            document.getElementById('score-text').innerText = `Skor: ${score}`;
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            playSound('laser');
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            playSound('fanfare');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const total = quizData.length * 10;
+            const accuracy = Math.round((score / total) * 100);
+
+            document.getElementById('summary-player-name').innerText = playerName;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+
+            // Calculate Rank
+            let rank = "";
+            let rankDesc = "";
+            let emoji = "👨‍🚀";
+
+            if (accuracy >= 90) {
+                rank = "Kapten Kosmik Purba";
+                rankDesc = "Luar biasa! Kamu memiliki pengetahuan setingkat komandan stasiun antariksa!";
+                emoji = "🏆";
+            } else if (accuracy >= 70) {
+                rank = "Penjelajah Galaksi";
+                rankDesc = "Hebat! Kamu sudah paham banyak hal tentang keajaiban tata surya kita.";
+                emoji = "🚀";
+            } else if (accuracy >= 50) {
+                rank = "Astronaut Muda";
+                rankDesc = "Bagus! Kamu punya dasar yang baik untuk jadi penerbang antariksa.";
+                emoji = "🌟";
+            } else {
+                rank = "Kadet Kadet Baru";
+                rankDesc = "Jangan menyerah! Terus belajar dan jelajahi fakta luar angkasa lagi!";
+                emoji = "🌙";
+            }
+
+            document.getElementById('result-badge-emoji').innerText = emoji;
+            document.getElementById('final-rank-badge').innerText = rank;
+            document.getElementById('rank-description').innerText = `"${rankDesc}"`;
+
+            // Big Celebration Confetti
+            confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        /* ----------------------------------------------------
+         * 4. MODALS (Certificate & Fun Facts)
+         * ---------------------------------------------------- */
+        function showCertificate() {
+            playSound('laser');
+            const accuracy = Math.round((score / (quizData.length * 10)) * 100);
+            document.getElementById('cert-name').innerText = playerName;
+            document.getElementById('cert-rank').innerText = document.getElementById('final-rank-badge').innerText;
+            document.getElementById('cert-accuracy').innerText = `${accuracy}%`;
+            
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('cert-date').innerText = dateStr;
+
+            document.getElementById('certificate-modal').classList.remove('hidden');
+        }
+
+        function showFunFacts() {
+            playSound('laser');
+            const factsList = document.getElementById('facts-list');
+            factsList.innerHTML = '';
+
+            userAnswers.forEach((ans, idx) => {
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-2xl border ${ans.isCorrect ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-rose-900/20 border-rose-500/30'}`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs px-2 py-0.5 rounded-full ${ans.isCorrect ? 'bg-emerald-500/30 text-emerald-300' : 'bg-rose-500/30 text-rose-300'} font-bold">
+                            Soal ${idx + 1}: ${ans.isCorrect ? 'Benar ✅' : 'Salah ❌'}
+                        </span>
+                    </div>
+                    <h4 class="font-bold text-white text-sm mb-1">${ans.question}</h4>
+                    <p class="text-xs text-slate-300 mb-1">Jawabanmu: <span class="${ans.isCorrect ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${ans.selected}</span></p>
+                    ${!ans.isCorrect ? `<p class="text-xs text-cyan-300 mb-2">Jawaban Benar: <strong>${ans.correctAnswer}</strong></p>` : ''}
+                    <div class="text-xs bg-slate-950/50 p-2.5 rounded-xl border border-slate-800 text-slate-300 italic">
+                        💡 <strong>Fakta Kosmik:</strong> ${ans.explanation}
+                    </div>
+                `;
+                factsList.appendChild(item);
+            });
+
+            document.getElementById('facts-modal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            playSound('laser');
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        /* ----------------------------------------------------
+         * 5. STARFIELD CANVAS ANIMATION
+         * ---------------------------------------------------- */
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+
+        let stars = [];
+        let numStars = 150;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.8 + 0.2,
+                    color: ['#ffffff', '#38bdf8', '#f472b6', '#fde047'][Math.floor(Math.random() * 4)],
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.02 + 0.005
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw subtle nebula glow
+            const gradient = ctx.createRadialGradient(
+                canvas.width * 0.5, canvas.height * 0.5, 50,
+                canvas.width * 0.5, canvas.height * 0.5, Math.max(canvas.width, canvas.height) * 0.7
+            );
+            gradient.addColorStop(0, 'rgba(15, 23, 42, 0)');
+            gradient.addColorStop(0.5, 'rgba(14, 116, 144, 0.05)');
+            gradient.addColorStop(1, 'rgba(3, 7, 18, 0.8)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw stars with twinkle effect
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0.2) {
+                    star.speed = -star.speed;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.abs(star.alpha);
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.shadowBlur = star.radius * 4;
+                ctx.shadowColor = star.color;
+                ctx.fill();
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        window.onload = function() {
+            resizeCanvas();
+            animateStars();
+        };
+    </script>
+</body>
+</html>
